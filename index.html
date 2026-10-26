@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111820">
+<title>Coilover Suspension Lab</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0c1218;
+  --surface: #131c25;
+  --surface-2: #18232d;
+  --surface-3: #202d38;
+  --line: #2a3945;
+  --text: #edf3f7;
+  --muted: #9cabb7;
+  --faint: #71818e;
+  --cyan: #50d2d0;
+  --cyan-soft: rgba(80,210,208,.12);
+  --orange: #ffae57;
+  --blue: #77aaff;
+  --red: #ff7c70;
+  --green: #8cdbad;
+  --radius: 16px;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background:
+  radial-gradient(900px 500px at 82% -14%, rgba(51,112,132,.16), transparent 62%), var(--bg); }
+button, input, select { font: inherit; }
+button, select, input[type="range"] { accent-color: var(--cyan); }
+button { color: inherit; }
+.app { max-width: 1480px; margin: auto; padding: 26px clamp(16px,3vw,42px) 34px; }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:25px; }
+.brand { display:flex; align-items:center; gap:12px; min-width:0; }
+.brand-mark { width:36px; height:36px; display:grid; place-items:center; border:1px solid rgba(80,210,208,.4); border-radius:11px; color:var(--cyan); background:var(--cyan-soft); font-size:18px; font-weight:700; }
+.brand-name { font-size:13px; font-weight:700; letter-spacing:.11em; text-transform:uppercase; }
+.brand-sub { color:var(--muted); font-size:12px; margin-top:2px; }
+.model-tag { border:1px solid var(--line); border-radius:999px; padding:7px 11px; color:var(--muted); font-size:11px; letter-spacing:.04em; white-space:nowrap; }
+.intro { margin-bottom:22px; }
+.eyebrow { color:var(--cyan); text-transform:uppercase; letter-spacing:.15em; font-size:10px; font-weight:700; margin-bottom:8px; }
+h1 { margin:0; font-size:clamp(26px,3.5vw,42px); letter-spacing:-.04em; font-weight:650; line-height:1.08; }
+.intro p { max-width:760px; color:var(--muted); line-height:1.5; margin:9px 0 0; font-size:14px; }
+.workspace { display:grid; grid-template-columns:minmax(285px,340px) minmax(0,1fr); gap:18px; align-items:start; }
+.panel { background:linear-gradient(160deg,rgba(255,255,255,.018),transparent 42%),var(--surface); border:1px solid var(--line); border-radius:var(--radius); }
+.controls { padding:18px; }
+.section-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:13px; }
+.section-head h2 { font-size:14px; margin:0; font-weight:650; letter-spacing:-.01em; }
+.step-label { color:var(--faint); font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+.preset-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:15px; }
+.preset { border:1px solid var(--line); border-radius:9px; padding:8px 4px; background:transparent; color:var(--muted); font-size:11px; cursor:pointer; transition:background .18s,border-color .18s,color .18s; }
+.preset:hover { border-color:#536776; color:var(--text); }
+.preset.active { background:var(--cyan-soft); border-color:rgba(80,210,208,.45); color:var(--cyan); }
+.control { margin:13px 0 15px; }
+.control-label { display:flex; justify-content:space-between; gap:12px; align-items:baseline; margin-bottom:6px; color:#dce5eb; font-size:12px; }
+.control-label output { color:var(--text); font-variant-numeric:tabular-nums; font-size:12px; font-weight:650; white-space:nowrap; }
+input[type="range"] { display:block; width:100%; height:18px; margin:0; background:transparent; cursor:pointer; }
+input[type="range"]::-webkit-slider-runnable-track { height:4px; border-radius:6px; background:linear-gradient(90deg,var(--cyan) 0%,var(--cyan) var(--range-progress,50%),#40515d var(--range-progress,50%),#40515d 100%); }
+input[type="range"]::-moz-range-track { height:4px; border-radius:6px; background:#40515d; }
+input[type="range"]::-moz-range-progress { height:4px; background:var(--cyan); border-radius:6px; }
+input[type="range"]::-webkit-slider-thumb { appearance:none; width:14px; height:14px; margin-top:-5px; border:2px solid var(--bg); border-radius:50%; background:var(--cyan); box-shadow:0 0 0 1px rgba(80,210,208,.55); }
+input[type="range"]::-moz-range-thumb { width:11px; height:11px; border:2px solid var(--bg); border-radius:50%; background:var(--cyan); box-shadow:0 0 0 1px rgba(80,210,208,.55); }
+input:disabled { opacity:.42; cursor:not-allowed; }
+.control-note { color:var(--faint); font-size:10px; line-height:1.4; margin-top:3px; }
+.derived { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; margin:9px 0 17px; background:var(--surface-2); border-radius:10px; }
+.derived .label { color:var(--muted); font-size:11px; }
+.derived strong { display:block; margin-top:3px; font-size:14px; font-weight:650; font-variant-numeric:tabular-nums; }
+.derived .secondary-value { color:var(--cyan); }
+.divider { height:1px; background:var(--line); margin:17px 0; }
+select { width:100%; padding:10px 34px 10px 11px; color:var(--text); background:var(--surface-2); border:1px solid var(--line); border-radius:9px; outline-color:var(--cyan); font-size:12px; }
+.select-label { display:block; font-size:12px; color:#dce5eb; margin:11px 0 6px; }
+.actions { display:flex; gap:8px; margin-top:16px; }
+.action { min-height:38px; padding:8px 11px; border-radius:9px; border:1px solid var(--line); background:var(--surface-2); color:var(--text); font-size:11px; font-weight:600; cursor:pointer; transition:.18s; }
+.action:hover { border-color:#536776; background:var(--surface-3); }
+.action.primary { background:var(--cyan); color:#071416; border-color:var(--cyan); }
+.action.primary:hover { filter:brightness(1.08); }
+.action:focus-visible,.preset:focus-visible,select:focus-visible,input:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+.small-action { background:transparent; color:var(--muted); border:0; padding:5px 0; font-size:10px; text-decoration:underline; text-decoration-color:#647582; text-underline-offset:3px; cursor:pointer; }
+.footnote { color:var(--faint); font-size:10px; line-height:1.45; margin:13px 1px 0; }
+.stage { display:grid; gap:14px; min-width:0; }
+.visual-panel { overflow:hidden; }
+.visual-head { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:15px 18px 0; }
+.visual-head h2 { margin:0; font-size:14px; font-weight:650; }
+.live-meta { color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums; }
+#suspensionView { display:block; width:100%; height:auto; min-height:210px; max-height:330px; }
+.visual-caption { display:flex; justify-content:space-between; gap:12px; padding:0 18px 14px; color:var(--muted); font-size:10px; }
+.visual-caption span:last-child { text-align:right; }
+.metric-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.metric { padding:13px 14px; min-width:0; }
+.metric-label { color:var(--muted); font-size:10px; line-height:1.3; }
+.metric-value { margin-top:6px; font-size:21px; font-weight:650; letter-spacing:-.04em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.metric-unit { font-size:11px; color:var(--muted); font-weight:500; letter-spacing:0; }
+.metric-detail { margin-top:5px; color:var(--faint); font-size:10px; line-height:1.35; }
+.charts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.chart-panel { padding:12px 12px 9px; min-width:0; }
+.chart-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 2px 6px; }
+.chart-head h3 { margin:0; font-size:12px; font-weight:650; }
+.chart-unit { color:var(--faint); font-size:10px; }
+.chart { display:block; width:100%; height:170px; }
+.chart-legend { display:flex; gap:14px; margin:2px 3px 0; color:var(--muted); font-size:10px; }
+.legend-key { display:flex; align-items:center; gap:6px; }
+.swatch { width:17px; height:2px; background:var(--cyan); }
+.swatch.reference { background:repeating-linear-gradient(90deg,var(--orange) 0 4px,transparent 4px 7px); }
+.compare-strip { display:flex; gap:10px; align-items:flex-start; padding:12px 15px; color:var(--muted); font-size:11px; line-height:1.45; }
+.compare-dot { flex:0 0 7px; height:7px; margin-top:4px; border-radius:50%; background:var(--cyan); }
+.compare-strip strong { color:var(--text); font-weight:600; }
+.reference-line { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:9px; }
+.reference-name { color:var(--faint); font-size:10px; overflow-wrap:anywhere; }
+.model-note { color:var(--faint); font-size:10px; line-height:1.45; padding:0 3px; }
+@media (max-width:1050px) {
+  .workspace { grid-template-columns:300px minmax(0,1fr); gap:12px; }
+  .controls { padding:15px; }
+  .metric { padding:11px; }
+  .metric-value { font-size:18px; }
+  .charts { grid-template-columns:1fr; }
+  .chart { height:155px; }
+}
+@media (max-width:760px) {
+  .app { padding:18px 14px 26px; }
+  .topbar { margin-bottom:20px; }
+  .brand-sub { display:none; }
+  .intro { margin-bottom:17px; }
+  .workspace { grid-template-columns:1fr; }
+  .controls { order:2; }
+  .stage { order:1; }
+  #suspensionView { min-height:190px; }
+  .metric-row { gap:7px; }
+  .metric { padding:10px; }
+  .metric-value { font-size:17px; }
+  .metric-detail { font-size:9px; }
+  .charts { grid-template-columns:1fr; }
+  .chart { height:170px; }
+}
+@media (max-width:420px) {
+  .model-tag { font-size:9px; padding:6px 8px; }
+  .metric-row { grid-template-columns:1fr; }
+  .metric { display:grid; grid-template-columns:1fr auto; align-items:center; column-gap:8px; }
+  .metric-value { grid-column:2; grid-row:1 / span 2; margin-top:0; }
+  .metric-detail { grid-column:1; }
+  .visual-caption { font-size:9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior:auto !important; transition-duration:.01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">↕</div>
+      <div><div class="brand-name">Coilover Lab</div><div class="brand-sub">Double-wishbone study · one-corner view</div></div>
+    </div>
+    <div class="model-tag">Illustrative quarter-car model</div>
+  </header>
+  <div class="intro">
+    <div class="eyebrow">Spring · damper · road input</div>
+    <h1>Coilover suspension</h1>
+    <p>Change spring rate, damper stiffness, damping, vehicle corner and road. Watch the suspension move, then compare comfort, travel and tyre-load response against a saved setup.</p>
+  </div>
+  <main class="workspace">
+    <aside class="panel controls" aria-label="Suspension and road controls">
+      <div class="section-head"><h2>Suspension setup</h2><span class="step-label">01 / tune</span></div>
+      <div class="preset-row" role="group" aria-label="Suspension starting presets">
+        <button class="preset" type="button" data-preset="comfort">Comfort</button>
+        <button class="preset active" type="button" data-preset="balanced">Balanced</button>
+        <button class="preset" type="button" data-preset="control">Body control</button>
+      </div>
+      <div class="control">
+        <label class="control-label" for="springRate"><span>Coil spring rate</span><output id="springRateOut" for="springRate">50 kN/m</output></label>
+        <input id="springRate" type="range" min="25" max="100" step="1" value="50">
+        <div class="control-note">Rate at the coilover spring.</div>
+      </div>
+      <div class="control">
+        <label class="control-label" for="damperStiffness"><span>Damper stiffness (elastic)</span><output id="damperStiffnessOut" for="damperStiffness">0 kN/m</output></label>
+        <input id="damperStiffness" type="range" min="0" max="30" step="1" value="0">
+        <div class="control-note">Optional spring-like restoring force at the damper. Damping remains a separate setting.</div>
+      </div>
+      <div class="control">
+        <label class="control-label" for="motionRatio"><span>Motion ratio</span><output id="motionRatioOut" for="motionRatio">0.60</output></label>
+        <input id="motionRatio" type="range" min="0.40" max="0.90" step="0.01" value="0.60">
+        <div class="control-note">Damper travel ÷ wheel travel. Wheel rate = (spring rate + damper stiffness) × ratio².</div>
+      </div>
+      <div class="control">
+        <label class="control-label" for="damperRate"><span>Damping coefficient</span><output id="damperRateOut" for="damperRate">4.2 kN·s/m</output></label>
+        <input id="damperRate" type="range" min="1" max="8" step="0.1" value="4.2">
+        <div class="control-note">Velocity-dependent resistance at the damper; motion ratio also changes wheel damping.</div>
+      </div>
+      <div class="derived" aria-live="polite">
+        <div><span class="label">Effective wheel rate</span><strong id="wheelRateValue">18.0 kN/m</strong></div>
+        <div style="text-align:right"><span class="label">Static sag estimate</span><strong class="secondary-value" id="sagValue">136 mm</strong></div>
+      </div>
+      <div class="control">
+        <label class="control-label" for="sprungMass"><span>Sprung mass per corner</span><output id="sprungMassOut" for="sprungMass">250 kg</output></label>
+        <input id="sprungMass" type="range" min="150" max="400" step="10" value="250">
+      </div>
+      <div class="control">
+        <label class="control-label" for="unsprungMass"><span>Wheel and hub mass</span><output id="unsprungMassOut" for="unsprungMass">40 kg</output></label>
+        <input id="unsprungMass" type="range" min="20" max="60" step="2" value="40">
+      </div>
+      <div class="control">
+        <label class="control-label" for="tyreRate"><span>Tyre stiffness</span><output id="tyreRateOut" for="tyreRate">180 kN/m</output></label>
+        <input id="tyreRate" type="range" min="100" max="300" step="10" value="180">
+      </div>
+      <div class="reference-line">
+        <span id="referenceName" class="reference-name">Reference: balanced starter setup</span>
+        <button id="saveReference" class="small-action" type="button">Save current as reference</button>
+      </div>
+      <div class="divider"></div>
+      <div class="section-head"><h2>Driving condition</h2><span class="step-label">02 / road</span></div>
+      <label class="select-label" for="surface">Road surface</label>
+      <select id="surface">
+        <option value="bump">Rounded speed bump</option>
+        <option value="pothole">Pothole</option>
+        <option value="corrugated">Corrugated road</option>
+        <option value="smooth">Smooth road</option>
+      </select>
+      <div class="control">
+        <label class="control-label" for="roadHeight"><span id="heightLabel">Bump height</span><output id="roadHeightOut" for="roadHeight">50 mm</output></label>
+        <input id="roadHeight" type="range" min="0" max="100" step="5" value="50">
+      </div>
+      <div class="control">
+        <label class="control-label" for="roadLength"><span id="lengthLabel">Bump length</span><output id="roadLengthOut" for="roadLength">1.0 m</output></label>
+        <input id="roadLength" type="range" min="0.4" max="3" step="0.1" value="1">
+      </div>
+      <div class="control">
+        <label class="control-label" for="roadSpacing"><span>Obstacle spacing</span><output id="roadSpacingOut" for="roadSpacing">5.0 m</output></label>
+        <input id="roadSpacing" type="range" min="4" max="20" step="0.5" value="5">
+        <div class="control-note">Distance between repeated bumps or potholes.</div>
+      </div>
+      <div class="control">
+        <label class="control-label" for="speed"><span>Vehicle speed</span><output id="speedOut" for="speed">18 km/h</output></label>
+        <input id="speed" type="range" min="0" max="100" step="1" value="18">
+      </div>
+      <div class="actions">
+        <button id="playButton" class="action primary" type="button" aria-pressed="true">Pause motion</button>
+        <button id="replayButton" class="action" type="button">Replay road</button>
+        <button id="resetButton" class="action" type="button">Reset</button>
+      </div>
+      <p class="footnote">Presets are starting points, not vehicle-specific tuning values. All inputs can be adjusted independently.</p>
+    </aside>
+
+    <section class="stage" aria-label="Suspension visualisation and calculated response">
+      <section class="panel visual-panel">
+        <div class="visual-head"><h2>Live corner response</h2><span class="live-meta" id="timeLabel">0.00 s · road input 0 mm</span></div>
+        <svg id="suspensionView" viewBox="0 0 800 360" role="img" aria-labelledby="svgTitle svgDesc">
+          <title id="svgTitle">Animated quarter-car coilover</title>
+          <desc id="svgDesc">A simplified side view shows a sprung body, coilover spring and damper, wheel, control arms and road surface.</desc>
+          <defs>
+            <linearGradient id="bodyFill" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#233442"/><stop offset="1" stop-color="#17242e"/></linearGradient>
+            <linearGradient id="tyreFill" x1="0" x2="1"><stop offset="0" stop-color="#11171c"/><stop offset=".5" stop-color="#27343d"/><stop offset="1" stop-color="#11171c"/></linearGradient>
+            <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path d="M0 324 H800" stroke="#344450" stroke-width="1" stroke-dasharray="3 7"/>
+          <path id="roadPath" d="" fill="none" stroke="#71818e" stroke-width="3" stroke-linejoin="round"/>
+          <path id="roadGlow" d="" fill="none" stroke="#50d2d0" stroke-width="1" opacity=".28"/>
+          <g id="bodyGroup">
+            <path d="M212 49 Q228 35 263 34 L443 34 Q470 36 490 55 L519 89 Q525 98 516 103 L235 103 Q219 101 212 89 Z" fill="url(#bodyFill)" stroke="#526674" stroke-width="2"/>
+            <path d="M275 42 L344 42 L344 82 L238 82 Q241 63 258 47 Z" fill="#101a22" stroke="#40515c" stroke-width="1.5"/>
+            <path d="M357 42 L436 42 Q455 44 474 68 L486 82 L357 82 Z" fill="#101a22" stroke="#40515c" stroke-width="1.5"/>
+            <path d="M219 105 L524 105 L508 121 L250 121 Z" fill="#30424e" stroke="#607482" stroke-width="1.5"/>
+            <path d="M247 121 L505 121" stroke="#91a0aa" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="424" cy="127" r="7" fill="#50d2d0" stroke="#0c1218" stroke-width="3"/>
+            <circle cx="475" cy="127" r="7" fill="#ffae57" stroke="#0c1218" stroke-width="3"/>
+            <circle cx="267" cy="122" r="5" fill="#8295a2"/>
+          </g>
+          <path id="upperArm" d="M266 132 L480 202" stroke="#788b98" stroke-width="8" stroke-linecap="round" fill="none"/>
+          <path id="lowerArm" d="M266 145 L480 273" stroke="#536875" stroke-width="10" stroke-linecap="round" fill="none"/>
+          <g id="coilover">
+            <path id="springPath" d="" fill="none" stroke="#50d2d0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#softGlow)"/>
+            <rect id="damperTube" x="464" y="168" width="22" height="42" rx="8" fill="#b96f35" stroke="#ffae57" stroke-width="2"/>
+            <path id="damperRod" d="" stroke="#dce5eb" stroke-width="5" stroke-linecap="round"/>
+            <circle id="lowerMount" cx="475" cy="211" r="8" fill="#ffae57" stroke="#18232d" stroke-width="3"/>
+          </g>
+          <g id="wheelGroup">
+            <circle cx="480" cy="255" r="70" fill="url(#tyreFill)" stroke="#70808b" stroke-width="3"/>
+            <circle cx="480" cy="255" r="56" fill="#101820" stroke="#394a56" stroke-width="2"/>
+            <circle cx="480" cy="255" r="38" fill="#26343e" stroke="#6b7c87" stroke-width="2"/>
+            <circle cx="480" cy="255" r="25" fill="#19252e" stroke="#92a0a9" stroke-width="2"/>
+            <g stroke="#627784" stroke-width="4" stroke-linecap="round">
+              <path d="M480 220 V290"/><path d="M445 255 H515"/><path d="M455 230 L505 280"/><path d="M505 230 L455 280"/>
+            </g>
+            <circle cx="480" cy="255" r="9" fill="#50d2d0"/>
+            <path d="M470 186 L480 198 L490 186" fill="#ffae57" stroke="#18232d" stroke-width="3"/>
+          </g>
+          <g id="labels" fill="#9cabb7" font-size="11" font-family="system-ui,sans-serif">
+            <text x="226" y="25">SPRUNG BODY</text><text x="515" y="248">WHEEL + HUB</text>
+            <text x="551" y="146" fill="#50d2d0">SPRING</text><text x="551" y="164" fill="#ffae57">DAMPER</text>
+          </g>
+          <g id="motionMarker"><circle id="roadMarker" cx="480" cy="324" r="5" fill="#50d2d0"/></g>
+        </svg>
+        <div class="visual-caption"><span>Spring length and wheel motion respond to the selected road input.</span><span>Schematic view · not to scale</span></div>
+      </section>
+
+      <div class="metric-row" aria-live="polite" aria-label="Calculated performance measures">
+        <div class="panel metric"><div class="metric-label">Peak body acceleration</div><div id="metricAccel" class="metric-value">— <span class="metric-unit">m/s²</span></div><div id="metricAccelDetail" class="metric-detail">Unweighted model peak</div></div>
+        <div class="panel metric"><div class="metric-label">Maximum suspension travel</div><div id="metricTravel" class="metric-value">— <span class="metric-unit">mm</span></div><div id="metricTravelDetail" class="metric-detail">Relative wheel-to-body motion</div></div>
+        <div class="panel metric"><div class="metric-label">Minimum tyre load estimate</div><div id="metricTyre" class="metric-value">— <span class="metric-unit">% static</span></div><div id="metricTyreDetail" class="metric-detail">Linear tyre model</div></div>
+      </div>
+
+      <div class="charts">
+        <section class="panel chart-panel"><div class="chart-head"><h3>Body acceleration</h3><span class="chart-unit">m/s² · time</span></div><canvas id="accelChart" class="chart" role="img" aria-label="Chart of body acceleration over time for current and reference setups"></canvas><div class="chart-legend"><span class="legend-key"><i class="swatch"></i>Current setup</span><span class="legend-key"><i class="swatch reference"></i>Reference</span></div></section>
+        <section class="panel chart-panel"><div class="chart-head"><h3>Suspension travel</h3><span class="chart-unit">mm · time</span></div><canvas id="travelChart" class="chart" role="img" aria-label="Chart of suspension travel over time for current and reference setups"></canvas><div class="chart-legend"><span class="legend-key"><i class="swatch"></i>Current setup</span><span class="legend-key"><i class="swatch reference"></i>Reference</span></div></section>
+      </div>
+      <div class="panel compare-strip" aria-live="polite"><span class="compare-dot" aria-hidden="true"></span><div id="comparisonText"><strong>Comparison:</strong> Current setup matches the reference. Change a suspension value to see the trade-off.</div></div>
+      <div class="model-note">Simplified two-mass quarter-car model. Damper stiffness is an optional linear elastic term; real dampers are usually characterised by force–velocity curves. The model omits full double-wishbone kinematics, chassis roll, bump stops, nonlinear parts and one-sided tyre contact. Use it for learning and comparison, not design sign-off or as a substitute for ANSYS and validation.</div>
+    </section>
+  </main>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const controls = ['springRate','damperStiffness','motionRatio','damperRate','sprungMass','unsprungMass','tyreRate','surface','roadHeight','roadLength','roadSpacing','speed'];
+  const defaults = {springRate:50,damperStiffness:0,motionRatio:.60,damperRate:4.2,sprungMass:250,unsprungMass:40,tyreRate:180,surface:'bump',roadHeight:50,roadLength:1,roadSpacing:5,speed:18};
+  const presets = {
+    comfort:{springRate:45,damperStiffness:0,damperRate:3.9},
+    balanced:{springRate:50,damperStiffness:0,damperRate:4.2},
+    control:{springRate:67,damperStiffness:0,damperRate:5.5}
+  };
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DT=.002, G=9.81, SCALE=350;
+  let currentData=[], referenceData=[], referenceConfig=null;
+  let running=!reducedMotion, clock=0, lastFrame=0, simDuration=4;
+
+  function configFromControls() {
+    const val={};
+    for(const id of controls) {
+      const el=$(id); val[id]=el.type==='range'?Number(el.value):el.value;
+    }
+    return deriveConfig(val);
+  }
+  function deriveConfig(val) {
+    val.speedMs=val.speed/3.6;
+    val.ks=(val.springRate+val.damperStiffness)*1000*val.motionRatio*val.motionRatio;
+    val.cs=val.damperRate*1000*val.motionRatio*val.motionRatio;
+    val.kt=val.tyreRate*1000;
+    val.heightM=val.roadHeight/1000;
+    val.lengthM=val.roadLength;
+    val.spacingM=val.roadSpacing;
+    val.ms=val.sprungMass;
+    val.mu=val.unsprungMass;
+    val.f0=(val.ms+val.mu)*G;
+    return val;
+  }
+  function roadAt(t,cfg) {
+    const h=cfg.heightM, L=cfg.lengthM, speed=cfg.speedMs;
+    if(cfg.surface==='smooth'||h===0||speed<=0) return 0;
+    if(cfg.surface==='corrugated') return h*Math.sin(2*Math.PI*speed*t/L);
+    const duration=L/speed, period=cfg.spacingM/speed;
+    const phase=((t%period)+period)%period;
+    if(phase>duration) return 0;
+    const pulse=h*.5*(1-Math.cos(2*Math.PI*phase/duration));
+    return cfg.surface==='pothole'?-pulse:pulse;
+  }
+  function derivatives(t,y,cfg) {
+    const [zs,vs,zu,vu]=y, zr=roadAt(t,cfg);
+    const rel=zs-zu, relV=vs-vu;
+    return [vs,(-cfg.ks*rel-cfg.cs*relV)/cfg.ms,vu,(cfg.ks*rel+cfg.cs*relV+cfg.kt*(zr-zu))/cfg.mu];
+  }
+  function addState(y,k,f) { return y.map((v,i)=>v+k*f[i]); }
+  function durationFor(cfg) {
+    const ridePeriod=2*Math.PI*Math.sqrt(cfg.ms/cfg.ks);
+    if(cfg.surface==='corrugated') return 5;
+    if(cfg.surface==='smooth'||cfg.speedMs<=0) return 4;
+    const obstaclePeriod=cfg.spacingM/cfg.speedMs;
+    return Math.max(4,Math.min(30,obstaclePeriod*5+Math.max(2,ridePeriod*2)));
+  }
+  function integrate(cfg,duration) {
+    const n=Math.ceil(duration/DT), data=[]; let y=[0,0,0,0];
+    for(let i=0;i<=n;i++) {
+      const t=i*DT, zr=roadAt(t,cfg), [zs,vs,zu,vu]=y;
+      const d=derivatives(t,y,cfg), acc=d[1];
+      const tyreLoad=cfg.f0+cfg.kt*(zr-zu);
+      data.push({t,zr,zs,vs,zu,vu,acc,travel:zs-zu,tyreLoad});
+      if(i===n) break;
+      const k1=derivatives(t,y,cfg);
+      const k2=derivatives(t+DT/2,addState(y,DT/2,k1),cfg);
+      const k3=derivatives(t+DT/2,addState(y,DT/2,k2),cfg);
+      const k4=derivatives(t+DT,addState(y,DT,k3),cfg);
+      y=y.map((v,j)=>v+DT*(k1[j]+2*k2[j]+2*k3[j]+k4[j])/6);
+    }
+    return data;
+  }
+  function metrics(data,cfg) {
+    let peakA=0,peakTravel=0,minTyre=Infinity;
+    for(const d of data) { peakA=Math.max(peakA,Math.abs(d.acc)); peakTravel=Math.max(peakTravel,Math.abs(d.travel)); minTyre=Math.min(minTyre,d.tyreLoad); }
+    const fn=Math.sqrt(cfg.ks/cfg.ms)/(2*Math.PI);
+    const zeta=cfg.cs/(2*Math.sqrt(cfg.ks*cfg.ms));
+    return {peakA,peakTravel,minTyre,minTyrePct:100*minTyre/cfg.f0,staticSag:cfg.ms*G/cfg.ks,fn,zeta};
+  }
+  function setRangeTrack(el) {
+    const min=Number(el.min), max=Number(el.max), value=Number(el.value), percent=100*(value-min)/(max-min);
+    el.style.setProperty('--range-progress',`${percent}%`);
+  }
+  function updateControlLabels(cfg) {
+    $('springRateOut').textContent=`${cfg.springRate.toFixed(0)} kN/m`;
+    $('damperStiffnessOut').textContent=`${cfg.damperStiffness.toFixed(0)} kN/m`;
+    $('motionRatioOut').textContent=cfg.motionRatio.toFixed(2);
+    $('damperRateOut').textContent=`${cfg.damperRate.toFixed(1)} kN·s/m`;
+    $('sprungMassOut').textContent=`${cfg.sprungMass.toFixed(0)} kg`;
+    $('unsprungMassOut').textContent=`${cfg.unsprungMass.toFixed(0)} kg`;
+    $('tyreRateOut').textContent=`${cfg.tyreRate.toFixed(0)} kN/m`;
+    $('roadHeightOut').textContent=`${cfg.roadHeight.toFixed(0)} mm`;
+    $('roadLengthOut').textContent=`${cfg.roadLength.toFixed(1)} m`;
+    $('roadSpacingOut').textContent=`${cfg.roadSpacing.toFixed(1)} m`;
+    $('speedOut').textContent=`${cfg.speed.toFixed(0)} km/h`;
+    $('wheelRateValue').textContent=`${(cfg.ks/1000).toFixed(1)} kN/m`;
+    $('sagValue').textContent=`${Math.round(cfg.ms*G/cfg.ks)} mm`;
+    for(const id of controls) if($(id).type==='range') setRangeTrack($(id));
+    const surface=cfg.surface;
+    $('heightLabel').textContent=surface==='pothole'?'Pothole depth':surface==='corrugated'?'Wave amplitude':surface==='smooth'?'Road height (unused)':'Bump height';
+    $('lengthLabel').textContent=surface==='corrugated'?'Wave wavelength':surface==='smooth'?'Feature length (unused)':'Feature length';
+    $('roadHeight').disabled=surface==='smooth'; $('roadLength').disabled=surface==='smooth';
+    $('roadSpacing').disabled=surface==='smooth'||surface==='corrugated';
+  }
+  function computeAndDraw() {
+    const cfg=configFromControls(); updateControlLabels(cfg);
+    simDuration=durationFor(cfg);
+    currentData=integrate(cfg,simDuration);
+    const refCfg=referenceConfig?deriveConfig({...cfg,...referenceConfig}):cfg;
+    referenceData=integrate(refCfg,simDuration);
+    const m=metrics(currentData,cfg), rm=metrics(referenceData,refCfg);
+    $('metricAccel').innerHTML=`${m.peakA.toFixed(2)} <span class="metric-unit">m/s²</span>`;
+    $('metricTravel').innerHTML=`${(m.peakTravel*1000).toFixed(1)} <span class="metric-unit">mm</span>`;
+    $('metricTyre').innerHTML=`${m.minTyrePct.toFixed(0)} <span class="metric-unit">% static</span>`;
+    $('metricAccelDetail').textContent=`${(m.peakA/G).toFixed(2)} g peak · approx. ride response`;
+    $('metricTravelDetail').textContent=`${(m.peakTravel*1000).toFixed(1)} mm peak · jounce/rebound demand`;
+    $('metricTyreDetail').textContent=m.minTyre<=0?'Linear estimate reaches zero or below; contact model needed.':`${m.minTyre.toFixed(0)} N minimum normal-load estimate`;
+    updateComparison(m,rm);
+    drawCharts(); drawScene();
+  }
+  function updateComparison(m,rm) {
+    if(!referenceConfig) { $('comparisonText').innerHTML='<strong>Comparison:</strong> Save a setup as the reference, then change the spring or damping to compare responses on the same road.'; return; }
+    const cfg=configFromControls();
+    if(cfg.surface==='smooth'||cfg.heightM===0||cfg.speedMs<=0) {
+      $('comparisonText').innerHTML='<strong>No road excitation:</strong> Dynamic responses coincide for this case. Compare effective wheel rate and static sag in the setup controls.';
+      return;
+    }
+    const pct=(a,b)=>b===0?0:100*(a-b)/b;
+    const da=pct(m.peakA,rm.peakA), dt=pct(m.peakTravel,rm.peakTravel);
+    const fmt=n=>`${Math.abs(n).toFixed(0)}% ${n<0?'lower':'higher'}`;
+    const text=Math.abs(da)<.5&&Math.abs(dt)<.5?'Current setup is close to the saved reference.':`Compared with reference: peak body acceleration ${fmt(da)}; suspension travel ${fmt(dt)}.`;
+    $('comparisonText').innerHTML=`<strong>Same road input:</strong> ${text}`;
+  }
+  function drawCharts() {
+    drawChart($('accelChart'),currentData,referenceData,'acc');
+    drawChart($('travelChart'),currentData,referenceData,'travel');
+  }
+  function drawChart(canvas,data,ref,field) {
+    const rect=canvas.getBoundingClientRect(); if(!rect.width) return;
+    const dpr=Math.min(window.devicePixelRatio||1,2), w=rect.width, h=rect.height;
+    canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
+    const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+    const pad={l:43,r:9,t:10,b:27}, x0=pad.l,x1=w-pad.r,y0=pad.t,y1=h-pad.b;
+    const get=d=>field==='acc'?d.acc:d.travel*1000;
+    const vals=[]; for(let i=0;i<data.length;i+=Math.max(1,Math.floor(data.length/500))) vals.push(get(data[i]));
+    for(let i=0;i<ref.length;i+=Math.max(1,Math.floor(ref.length/500))) vals.push(get(ref[i]));
+    let min=Math.min(0,...vals),max=Math.max(0,...vals); if(min===max){min=-1;max=1;}
+    const span=max-min, margin=span*.12; min-=margin; max+=margin;
+    const xmax=data[data.length-1]?.t||1;
+    const X=t=>x0+(t/xmax)*(x1-x0),Y=v=>y1-(v-min)/(max-min)*(y1-y0);
+    ctx.font='10px system-ui, sans-serif'; ctx.lineWidth=1;
+    const ticks=4;
+    for(let i=0;i<=ticks;i++) {
+      const val=min+(max-min)*i/ticks, yy=Y(val);
+      ctx.strokeStyle='rgba(156,171,183,.16)'; ctx.beginPath();ctx.moveTo(x0,yy);ctx.lineTo(x1,yy);ctx.stroke();
+      ctx.fillStyle='#9cabb7';ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillText(field==='acc'?val.toFixed(1):`${val.toFixed(0)}`,x0-6,yy);
+    }
+    for(let i=0;i<=4;i++) {
+      const t=xmax*i/4,xx=X(t);
+      ctx.strokeStyle='rgba(156,171,183,.1)';ctx.beginPath();ctx.moveTo(xx,y0);ctx.lineTo(xx,y1);ctx.stroke();
+      ctx.fillStyle='#9cabb7';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(t.toFixed(xmax<6?1:0),xx,y1+7);
+    }
+    ctx.strokeStyle='#50616d';ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x0,y1);ctx.lineTo(x1,y1);ctx.stroke();
+    const pathFor=(arr,color,dash)=>{
+      ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash(dash? [5,4]:[]);
+      const stride=Math.max(1,Math.floor(arr.length/650));
+      for(let i=0;i<arr.length;i+=stride){const d=arr[i]; const x=X(d.t),y=Y(get(d)); if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+      if(arr.length){const d=arr[arr.length-1];ctx.lineTo(X(d.t),Y(get(d)));}
+      ctx.stroke();ctx.setLineDash([]);
+    };
+    pathFor(ref,'#ffae57',true); pathFor(data,'#50d2d0',false);
+    ctx.fillStyle='#9cabb7';ctx.font='9px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('time (s)',(x0+x1)/2,h-1);
+  }
+  function makeSpringPath(x,top,bottom,turns=8,amp=14) {
+    const len=Math.max(10,bottom-top), points=turns*8;
+    let d=`M ${x} ${top}`;
+    for(let i=1;i<=points;i++) {
+      const f=i/points, xx=x+Math.sin(f*turns*2*Math.PI)*amp, yy=top+len*f;
+      d+=` L ${xx.toFixed(1)} ${yy.toFixed(1)}`;
+    }
+    return d;
+  }
+  function sceneRoadPath(t,cfg) {
+    let d='',n=100, wheelX=480, pxPerM=90;
+    for(let i=0;i<=n;i++) {
+      const x=800*i/n;
+      let zr=0;
+      if(cfg.surface==='bump'||cfg.surface==='pothole') {
+        const distance=(x-wheelX)/pxPerM+cfg.speedMs*t;
+        const s=((distance%cfg.spacingM)+cfg.spacingM)%cfg.spacingM, duration=cfg.lengthM;
+        if(s>=0&&s<=duration) {
+          const pulse=cfg.heightM*.5*(1-Math.cos(2*Math.PI*s/duration));
+          zr=cfg.surface==='pothole'?-pulse:pulse;
+        }
+      } else if(cfg.surface==='corrugated') {
+        const s=(x-wheelX)/pxPerM+cfg.speedMs*t;
+        zr=cfg.heightM*Math.sin(2*Math.PI*s/cfg.lengthM);
+      }
+      const y=324-zr*400;
+      d+=(i===0?'M':' L')+` ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }
+    return d;
+  }
+  function drawScene() {
+    if(!currentData.length) return;
+    const cfg=configFromControls(), sample=currentData[Math.min(currentData.length-1,Math.floor(clock/DT))]||currentData[0];
+    const bodyY=-sample.zs*SCALE, wheelY=-sample.zu*SCALE;
+    $('bodyGroup').setAttribute('transform',`translate(0 ${bodyY.toFixed(2)})`);
+    $('wheelGroup').setAttribute('transform',`translate(0 ${wheelY.toFixed(2)})`);
+    $('upperArm').setAttribute('d',`M 266 132 L 480 ${202+wheelY*.65+bodyY*.3}`);
+    $('lowerArm').setAttribute('d',`M 266 145 L 480 ${273+wheelY*.75}`);
+    const top=132+bodyY, bottom=185-cfg.motionRatio*sample.zu*SCALE;
+    $('springPath').setAttribute('d',makeSpringPath(424,top,bottom,8,13));
+    const damperTop=top+2, damperBottom=bottom-3, tubeH=Math.max(20,(damperBottom-damperTop)*.50);
+    $('damperTube').setAttribute('y',(damperTop+(damperBottom-damperTop)*.47).toFixed(1));
+    $('damperTube').setAttribute('height',tubeH.toFixed(1));
+    $('damperRod').setAttribute('d',`M 475 ${damperTop.toFixed(1)} L 475 ${(damperBottom-tubeH*.15).toFixed(1)}`);
+    $('lowerMount').setAttribute('cy',bottom.toFixed(1));
+    const road=sceneRoadPath(clock,cfg); $('roadPath').setAttribute('d',road); $('roadGlow').setAttribute('d',road);
+    const zr=sample.zr;
+    $('roadMarker').setAttribute('cy',(324-zr*400).toFixed(1));
+    $('timeLabel').textContent=`${clock.toFixed(2)} s · road input ${(zr*1000).toFixed(0)} mm`;
+  }
+  function animate(ts) {
+    if(!lastFrame) lastFrame=ts;
+    const elapsed=Math.min(.05,(ts-lastFrame)/1000); lastFrame=ts;
+    if(running&&currentData.length) {
+      clock+=elapsed;
+      if(clock>simDuration) clock=0;
+      drawScene();
+    }
+    frame=requestAnimationFrame(animate);
+  }
+  function updateAndResetClock() { clock=0; lastFrame=0; computeAndDraw(); }
+  function markPreset() {
+    const c=configFromControls(); let found='';
+    for(const [name,p] of Object.entries(presets)) if(c.springRate===p.springRate&&c.damperStiffness===p.damperStiffness&&c.damperRate===p.damperRate) found=name;
+    document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===found));
+  }
+  controls.forEach(id=>{if($(id).type==='range')$(id).addEventListener('input',()=>{markPreset();updateAndResetClock();});});
+  $('surface').addEventListener('change',()=>{updateAndResetClock();});
+  document.querySelectorAll('.preset').forEach(btn=>btn.addEventListener('click',()=>{
+    const p=presets[btn.dataset.preset];$('springRate').value=p.springRate;$('damperStiffness').value=p.damperStiffness;$('damperRate').value=p.damperRate;
+    markPreset();updateAndResetClock();
+  }));
+  $('saveReference').addEventListener('click',()=>{
+    const c=configFromControls();
+    referenceConfig={springRate:c.springRate,damperStiffness:c.damperStiffness,motionRatio:c.motionRatio,damperRate:c.damperRate,sprungMass:c.sprungMass,unsprungMass:c.unsprungMass,tyreRate:c.tyreRate};
+    $('referenceName').textContent=`Reference: spring ${c.springRate.toFixed(0)} + damper k ${c.damperStiffness.toFixed(0)} · ratio ${c.motionRatio.toFixed(2)} · c ${c.damperRate.toFixed(1)}`;
+    computeAndDraw();
+  });
+  $('playButton').addEventListener('click',()=>{
+    running=!running; $('playButton').textContent=running?'Pause motion':'Play motion'; $('playButton').setAttribute('aria-pressed',String(running));
+    if(running&&clock>=simDuration)clock=0;
+  });
+  $('replayButton').addEventListener('click',()=>{clock=0;drawScene();if(!running){running=true;$('playButton').textContent='Pause motion';$('playButton').setAttribute('aria-pressed','true');}});
+  $('resetButton').addEventListener('click',()=>{
+    for(const id of controls)$(id).value=defaults[id];
+    referenceConfig={springRate:defaults.springRate,damperStiffness:defaults.damperStiffness,motionRatio:defaults.motionRatio,damperRate:defaults.damperRate,sprungMass:defaults.sprungMass,unsprungMass:defaults.unsprungMass,tyreRate:defaults.tyreRate};
+    $('referenceName').textContent='Reference: balanced starter setup';
+    running=!reducedMotion;$('playButton').textContent=running?'Pause motion':'Play motion';$('playButton').setAttribute('aria-pressed',String(running));
+    markPreset();updateAndResetClock();
+  });
+  referenceConfig={springRate:defaults.springRate,damperStiffness:defaults.damperStiffness,motionRatio:defaults.motionRatio,damperRate:defaults.damperRate,sprungMass:defaults.sprungMass,unsprungMass:defaults.unsprungMass,tyreRate:defaults.tyreRate};
+  markPreset();$('playButton').textContent=running?'Pause motion':'Play motion';$('playButton').setAttribute('aria-pressed',String(running));computeAndDraw();requestAnimationFrame(animate);
+  new ResizeObserver(()=>drawCharts()).observe(document.querySelector('.charts'));
+})();
+</script>
+</body>
+</html>
